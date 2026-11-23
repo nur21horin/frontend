@@ -14,6 +14,19 @@ import {
 import { Flight } from "../types/flight";
 import { getFlights } from "../services/flightService";
 
+import dynamic from "next/dynamic";
+
+const FlightMap = dynamic(
+  () => import("../components/FlightMap"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[550px] items-center justify-center rounded-xl bg-[#111a2a] text-slate-400">
+        Loading Global Flight Map...
+      </div>
+    ),
+  }
+);
 
 
 export default function Dashboard() {
@@ -207,6 +220,10 @@ export default function Dashboard() {
 
         </div>
 
+        {/* Global Flight Map */}
+        <div className="mb-10">
+          <FlightMap flights={flights} />
+          </div>
 
         {/* Flight Search */}
 
