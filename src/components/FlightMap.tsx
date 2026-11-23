@@ -8,34 +8,26 @@ import {
   ZoomControl,
 } from "react-leaflet";
 
-import { Flight } from "@/types/flight";
+import { LiveFlight } from "@/types/flight";
 
 interface FlightMapProps {
-  flights: Flight[];
+  flights: LiveFlight[];
 }
 
 export default function FlightMap({ flights }: FlightMapProps) {
 
   const positionedFlights = flights.filter((flight) => {
-
-    const lat = flight.live?.latitude;
-    const lng = flight.live?.longitude;
-
     return (
-      flight.flight_status === "active" &&
-      typeof lat === "number" &&
-      typeof lng === "number" &&
-      Number.isFinite(lat) &&
-      Number.isFinite(lng) &&
-      lat >= -90 &&
-      lat <= 90 &&
-      lng >= -180 &&
-      lng <= 180
+      Number.isFinite(flight.latitude) &&
+      Number.isFinite(flight.longitude) &&
+      flight.latitude >= -90 &&
+      flight.latitude <= 90 &&
+      flight.longitude >= -180 &&
+      flight.longitude <= 180
     );
   });
 
   return (
-
     <div className="overflow-hidden rounded-xl border border-slate-800 bg-[#111a2a]">
 
       <div className="flex items-center justify-between border-b border-slate-800 p-5">
@@ -46,7 +38,7 @@ export default function FlightMap({ flights }: FlightMapProps) {
           </h3>
 
           <p className="mt-1 text-sm text-slate-400">
-            Aircraft positions from Aviationstack
+            Live aircraft positions from Aviationstack
           </p>
         </div>
 
@@ -82,10 +74,10 @@ export default function FlightMap({ flights }: FlightMapProps) {
           {positionedFlights.map((flight, index) => (
 
             <CircleMarker
-              key={`${flight.flight?.iata}-${index}`}
+              key={flight.icao24 || flight.registration || `${flight.flight_number}-${index}`}
               center={[
-                flight.live!.latitude!,
-                flight.live!.longitude!,
+                flight.latitude,
+                flight.longitude,
               ]}
               radius={7}
               pathOptions={{
@@ -101,31 +93,39 @@ export default function FlightMap({ flights }: FlightMapProps) {
                 <div className="min-w-48 text-sm">
 
                   <h3 className="font-bold">
-                    {flight.flight?.iata || "Unknown Flight"}
+                    {flight.flight_number || "Unknown Flight"}
                   </h3>
 
                   <p>
-                    Airline: {flight.airline?.name || "Unknown"}
+                    Airline: {flight.airline || "Unknown"}
                   </p>
 
                   <p>
-                    From: {flight.departure?.iata || "N/A"}
+                    From: {flight.departure || "N/A"}
                   </p>
 
                   <p>
-                    To: {flight.arrival?.iata || "N/A"}
+                    To: {flight.arrival || "N/A"}
                   </p>
 
                   <p>
-                    Altitude: {flight.live?.altitude ?? "N/A"} m
+                    Altitude: {flight.altitude ?? "N/A"} m
                   </p>
 
                   <p>
-                    Speed: {flight.live?.speed_horizontal ?? "N/A"} km/h
+                    Speed: {flight.speed ?? "N/A"} km/h
                   </p>
 
                   <p>
-                    Direction: {flight.live?.direction ?? "N/A"}°
+                    Direction: {flight.direction ?? "N/A"}°
+                  </p>
+
+                  <p>
+                    Registration: {flight.registration || "N/A"}
+                  </p>
+
+                  <p>
+                    ICAO24: {flight.icao24 || "N/A"}
                   </p>
 
                 </div>
@@ -149,8 +149,7 @@ export default function FlightMap({ flights }: FlightMapProps) {
               </p>
 
               <p className="mt-2 max-w-sm text-sm text-slate-400">
-                Aviationstack has not returned usable live coordinates
-                for the current flights.
+                Waiting for valid live aircraft coordinates.
               </p>
 
             </div>
@@ -162,6 +161,5 @@ export default function FlightMap({ flights }: FlightMapProps) {
       </div>
 
     </div>
-
   );
 }
