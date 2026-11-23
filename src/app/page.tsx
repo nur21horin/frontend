@@ -1,0 +1,373 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import {
+  Plane,
+  PlaneTakeoff,
+  PlaneLanding,
+  RefreshCw,
+  Search,
+  Activity,
+  Clock,
+} from "lucide-react";
+import { Flight } from "../types/flight";
+import { getFlights } from "../services/flightService";
+
+
+
+export default function Dashboard() {
+
+  const [flights, setFlights] = useState<Flight[]>([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState("");
+
+  const [search, setSearch] = useState("");
+
+
+  const fetchFlights = async () => {
+
+    try {
+
+      setLoading(true);
+      setError("");
+
+      const response = await getFlights();
+
+      setFlights(response.data || []);
+
+    } catch (err) {
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong"
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
+
+
+  useEffect(() => {
+
+    fetchFlights();
+
+  }, []);
+
+
+  const filteredFlights = flights.filter((flight) => {
+
+    const query = search.toLowerCase();
+
+    return (
+      flight.flight?.number?.toLowerCase().includes(query) ||
+      flight.airline?.name?.toLowerCase().includes(query) ||
+      flight.departure?.iata?.toLowerCase().includes(query) ||
+      flight.arrival?.iata?.toLowerCase().includes(query)
+    );
+
+  });
+
+
+  const activeFlights = flights.filter(
+    (flight) => flight.flight_status === "active"
+  ).length;
+
+  const landedFlights = flights.filter(
+    (flight) => flight.flight_status === "landed"
+  ).length;
+
+  const cancelledFlights = flights.filter(
+    (flight) => flight.flight_status === "cancelled"
+  ).length;
+
+
+  const stats = [
+    {
+      title: "Total Flights",
+      value: flights.length,
+      icon: Plane,
+    },
+    {
+      title: "Active Flights",
+      value: activeFlights,
+      icon: Activity,
+    },
+    {
+      title: "Landed Flights",
+      value: landedFlights,
+      icon: PlaneLanding,
+    },
+    {
+      title: "Cancelled Flights",
+      value: cancelledFlights,
+      icon: Clock,
+    },
+  ];
+
+
+  return (
+
+    <main className="min-h-screen bg-[#080d18] text-white">
+
+      {/* Navbar */}
+
+      <nav className="border-b border-slate-800 px-8 py-5">
+
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+
+          <div className="flex items-center gap-3">
+
+            <Plane className="text-sky-400" size={30} />
+
+            <h1 className="text-2xl font-bold">
+              AeroVision
+            </h1>
+
+          </div>
+
+          <span className="text-sm text-slate-400">
+            Global Aviation Intelligence
+          </span>
+
+        </div>
+
+      </nav>
+
+
+      <section className="mx-auto max-w-7xl px-8 py-10">
+
+        {/* Heading */}
+
+        <div className="mb-8 flex items-center justify-between">
+
+          <div>
+
+            <h2 className="text-3xl font-bold">
+              Flight Operations
+            </h2>
+
+            <p className="mt-2 text-slate-400">
+              Monitor global flight activities.
+            </p>
+
+          </div>
+
+          <button
+            onClick={fetchFlights}
+            disabled={loading}
+            className="flex items-center gap-2 rounded-lg bg-sky-500 px-4 py-3 font-medium hover:bg-sky-600 disabled:opacity-50"
+          >
+
+            <RefreshCw size={18} />
+
+            Refresh
+
+          </button>
+
+        </div>
+
+
+        {/* Statistics Cards */}
+
+        <div className="mb-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+
+          {stats.map((stat) => (
+
+            <div
+              key={stat.title}
+              className="rounded-xl border border-slate-800 bg-[#111a2a] p-6"
+            >
+
+              <div className="flex items-center justify-between">
+
+                <p className="text-sm text-slate-400">
+                  {stat.title}
+                </p>
+
+                <stat.icon className="text-sky-400" />
+
+              </div>
+
+              <h3 className="mt-4 text-3xl font-bold">
+
+                {loading ? "..." : stat.value}
+
+              </h3>
+
+            </div>
+
+          ))}
+
+        </div>
+
+
+        {/* Flight Search */}
+
+        <div className="mb-6 rounded-xl border border-slate-800 bg-[#111a2a] p-5">
+
+          <div className="flex items-center gap-3 rounded-lg border border-slate-700 px-4">
+
+            <Search className="text-slate-400" />
+
+            <input
+              type="text"
+              placeholder="Search flight number, airline or airport..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-transparent py-4 text-white outline-none placeholder:text-slate-500"
+            />
+
+          </div>
+
+        </div>
+
+
+        {/* Flight Table */}
+
+        <div className="overflow-hidden rounded-xl border border-slate-800 bg-[#111a2a]">
+
+          <div className="border-b border-slate-800 p-5">
+
+            <h3 className="text-xl font-semibold">
+              Flight Information
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-400">
+              Live data provided by Aviationstack
+            </p>
+
+          </div>
+
+
+          {error && (
+
+            <div className="p-6 text-red-400">
+              {error}
+            </div>
+
+          )}
+
+
+          {loading ? (
+
+            <div className="p-10 text-center text-slate-400">
+              Loading flight information...
+            </div>
+
+          ) : (
+
+            <div className="overflow-x-auto">
+
+              <table className="w-full text-left text-sm">
+
+                <thead className="bg-[#172337] text-slate-400">
+
+                  <tr>
+
+                    <th className="p-4">Flight</th>
+                    <th className="p-4">Airline</th>
+                    <th className="p-4">Departure</th>
+                    <th className="p-4">Arrival</th>
+                    <th className="p-4">Status</th>
+
+                  </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                  {filteredFlights.map((flight, index) => (
+
+                    <tr
+                      key={`${flight.flight?.iata}-${index}`}
+                      className="border-t border-slate-800 hover:bg-slate-800/40"
+                    >
+
+                      <td className="p-4 font-semibold">
+
+                        {flight.flight?.iata || "N/A"}
+
+                      </td>
+
+
+                      <td className="p-4">
+
+                        {flight.airline?.name || "Unknown"}
+
+                      </td>
+
+
+                      <td className="p-4">
+
+                        <div className="font-semibold">
+                          {flight.departure?.iata || "N/A"}
+                        </div>
+
+                        <div className="text-xs text-slate-400">
+                          {flight.departure?.airport || "Unknown"}
+                        </div>
+
+                      </td>
+
+
+                      <td className="p-4">
+
+                        <div className="font-semibold">
+                          {flight.arrival?.iata || "N/A"}
+                        </div>
+
+                        <div className="text-xs text-slate-400">
+                          {flight.arrival?.airport || "Unknown"}
+                        </div>
+
+                      </td>
+
+
+                      <td className="p-4">
+
+                        <span className="rounded-full bg-sky-500/10 px-3 py-1 text-xs font-medium capitalize text-sky-400">
+
+                          {flight.flight_status || "Unknown"}
+
+                        </span>
+
+                      </td>
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+
+              {!error && filteredFlights.length === 0 && (
+
+                <div className="p-10 text-center text-slate-400">
+                  No flights found.
+                </div>
+
+              )}
+
+            </div>
+
+          )}
+
+        </div>
+
+      </section>
+
+    </main>
+
+  );
+
+}
