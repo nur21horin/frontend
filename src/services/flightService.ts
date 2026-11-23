@@ -1,4 +1,7 @@
-import { FlightResponse } from "@/types/flight";
+import {
+  FlightResponse,
+  LiveFlightResponse
+} from "@/types/flight";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -35,6 +38,22 @@ export async function getFlights(
 
   if (!response.ok) {
     throw new Error("Failed to fetch flight information");
+  }
+
+  return response.json();
+}
+
+export async function getLiveFlights(): Promise<LiveFlightResponse> {
+
+  const response = await fetch(
+    `${API_URL}/api/flights/live?limit=100`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch live flight information");
   }
 
   return response.json();
